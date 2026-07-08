@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: afyasignal-autopilot
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
+      base-url: https://dashscope-intl.aliyuncs.com
+      chat:
+        options:
+          model: qwen-plus
+
+logging:
+  level:
+    com.alibaba.cloud.ai: INFO
