@@ -12,6 +12,13 @@ spring:
         options:
           model: qwen-plus
 
+afyasignal:
+  api:
+    base-url: ${AFYASIGNAL_API_BASE_URL:http://localhost:8080}
+    service-account:
+      email: ${AUTOPILOT_SERVICE_EMAIL:autopilot@afyasignal.internal}
+      password: ${AUTOPILOT_SERVICE_PASSWORD}
+
 logging:
   level:
     com.alibaba.cloud.ai: INFO
