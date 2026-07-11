@@ -1,12 +1,16 @@
 package com.afyasignal.autopilot.client;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,6 +20,10 @@ import java.util.function.Function;
  * Talks to the existing AfyaSignal (Boot 4) backend as the AUTOPILOT service
  * account over its normal JWT login flow — see AfyaSignal's ServiceAccountSeeder.
  * Token is cached and only refreshed on login or a 401 from a downstream call.
+ * Connect/read timeouts are bounded so an unreachable AfyaSignal fails fast
+ * (as a RestClientException) instead of hanging a tool call indefinitely —
+ * AutopilotTools turns that into a graceful, model-visible error message
+ * rather than a crashed agent run.
  */
 @Component
 public class AfyaSignalClient {
@@ -31,7 +39,11 @@ public class AfyaSignalClient {
 	public AfyaSignalClient(@Value("${afyasignal.api.base-url}") String baseUrl,
 			@Value("${afyasignal.api.service-account.email}") String email,
 			@Value("${afyasignal.api.service-account.password}") String password) {
-		this.restClient = RestClient.create(baseUrl);
+		ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
+			.withConnectTimeout(Duration.ofSeconds(5))
+			.withReadTimeout(Duration.ofSeconds(10));
+		ClientHttpRequestFactory requestFactory = ClientHttpRequestFactoryBuilder.detect().build(settings);
+		this.restClient = RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory).build();
 		this.email = email;
 		this.password = password;
 	}

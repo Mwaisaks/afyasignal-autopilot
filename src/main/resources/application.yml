@@ -11,13 +11,27 @@ spring:
       chat:
         options:
           model: qwen-plus
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:afyasignal_autopilot}
+    username: ${DB_USER:afyasignal}
+    password: ${DB_PASSWORD}
 
 afyasignal:
   api:
-    base-url: ${AFYASIGNAL_API_BASE_URL:http://localhost:8080}
+    base-url: ${AFYASIGNAL_API_BASE_URL:http://localhost:8082}
     service-account:
       email: ${AUTOPILOT_SERVICE_EMAIL:autopilot@afyasignal.internal}
       password: ${AUTOPILOT_SERVICE_PASSWORD}
+  checkpoint:
+    db:
+      host: ${DB_HOST:localhost}
+      port: ${DB_PORT:5432}
+      user: ${DB_USER:afyasignal}
+      password: ${DB_PASSWORD}
+      database: ${DB_NAME:afyasignal_autopilot}
+  agent:
+    model-call-timeout-seconds: ${MODEL_CALL_TIMEOUT_SECONDS:45}
+    model-call-max-attempts: ${MODEL_CALL_MAX_ATTEMPTS:2}
 
 logging:
   level:

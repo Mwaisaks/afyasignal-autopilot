@@ -1,0 +1,42 @@
+[
+  {
+    "id": "clear-emergency",
+    "title": "Clear emergency — approval path",
+    "childId": "CHILD-DEMO-0001",
+    "chvReport": "CHV report for childId CHILD-DEMO-0001: baby very hot, floppy, breathing fast since morning.",
+    "expectedFlow": "Agent fetches history (EMERGENCY category, danger signs), proposes draftReferral + notifyCHV, pauses for approval. On approve, referral is drafted (DRAFT status) and the CHV receives urgent transport instructions.",
+    "demoNotes": "The centerpiece scenario for the demo video — unambiguous danger signs, full chain visible end to end."
+  },
+  {
+    "id": "severe-dehydration",
+    "title": "Severe dehydration — approval path",
+    "childId": "CHILD-DEMO-0003",
+    "chvReport": "CHV report for childId CHILD-DEMO-0003: child has had severe watery diarrhea for 3 days, very weak, sunken eyes, refusing to drink water.",
+    "expectedFlow": "Agent recognizes WHO emergency dehydration criteria, proposes referral + CHV notification with ORS guidance, pauses for approval.",
+    "demoNotes": "Shows the agent citing a specific clinical guideline (WHO IMCI) in its reasoning, not just pattern-matching keywords."
+  },
+  {
+    "id": "chest-pain-already-treated",
+    "title": "Chest-pain-like presentation — rejection path",
+    "childId": "CHILD-DEMO-0002",
+    "chvReport": "CHV report for childId CHILD-DEMO-0002: child clutching chest, breathing fast, looks distressed, started an hour ago.",
+    "expectedFlow": "Agent proposes referral + notification (reasonable given the report alone). Nurse rejects with reason 'already assessed in person, started on treatment on-site'. Agent resumes, acknowledges the rejection, adapts its final answer, and confirms no referral or notification was actually sent.",
+    "demoNotes": "The rejection-path fixture (mirrors the Phase 1 spike's rejection test). Demonstrates the human-in-the-loop checkpoint is a real veto, not a rubber stamp — nurse context outside the report changes the outcome."
+  },
+  {
+    "id": "ambiguous-not-eating",
+    "title": "Genuinely ambiguous report — clarification path",
+    "childId": "CHILD-DEMO-0002",
+    "chvReport": "CHV report for childId CHILD-DEMO-0002: kid seems a bit off today, not eating much. Not sure if its serious.",
+    "expectedFlow": "Agent fetches history, recognizes the report is too vague to justify escalation despite a prior URGENT record, and asks specific clarifying questions (fever today? vomiting/diarrhea now? can the child drink? convulsions?) instead of drafting a referral.",
+    "demoNotes": "Explicit judging point: ambiguity handling. No tool call is gated here because none is proposed — the agent declines to act at all, which is the correct behavior, not a missing feature."
+  },
+  {
+    "id": "mild-general-case",
+    "title": "Mild case — no referral expected",
+    "childId": "CHILD-DEMO-0004",
+    "chvReport": "CHV report for childId CHILD-DEMO-0004: mild cough for one day, child is playful and eating normally, no fever.",
+    "expectedFlow": "Agent fetches history (GENERAL category, no danger signs), concludes the case does not meet referral criteria, and advises routine home monitoring — no tool calls proposed.",
+    "demoNotes": "Shows the agent is not trigger-happy — escalating everything would be as untrustworthy as missing an emergency. Good scenario for the 'production-readiness over toy demo' judging angle."
+  }
+]
