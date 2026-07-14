@@ -1,0 +1,85 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: afyasignal-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-afyasignal}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Build context assumes AfyaSignal is checked out as a sibling directory:
+  #   projects/AfyaSignal/AfyaSignalBackend/AfyaSignal
+  #   projects/afyasignal-autopilot   <- this repo
+  afyasignal:
+    build:
+      context: ../AfyaSignal/AfyaSignalBackend/AfyaSignal
+      dockerfile: Dockerfile
+    container_name: afyasignal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      PORT: 8082
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-afyasignal}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DDL_AUTO: update
+      DEMO_DATA_ENABLED: "true"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-unused-dummy-key}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?CORS_ALLOWED_ORIGINS is required}
+      AUTOPILOT_SERVICE_PASSWORD: ${AUTOPILOT_SERVICE_PASSWORD:?AUTOPILOT_SERVICE_PASSWORD is required}
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8082/swagger-ui.html || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  autopilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: afyasignal-autopilot
+    depends_on:
+      postgres:
+        condition: service_healthy
+      afyasignal:
+        condition: service_healthy
+    environment:
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:?DASHSCOPE_API_KEY is required}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: afyasignal_autopilot
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      AFYASIGNAL_API_BASE_URL: http://afyasignal:8082
+      AUTOPILOT_SERVICE_PASSWORD: ${AUTOPILOT_SERVICE_PASSWORD}
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8081/api/approvals || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
